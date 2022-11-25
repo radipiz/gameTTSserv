@@ -10,6 +10,8 @@ from gametts.GameTTS.gametts import TTS
 from core.config import Config
 import core.util
 
+from phonemizer.backend import EspeakBackend
+
 
 class DatabaseAdapter:
     database: Database
@@ -53,6 +55,32 @@ class DatabaseAdapter:
         return list(map(lambda r: Game(**r), result))
 
 
+class TtsWrapper(TTS):
+    model_path: str
+    espeak_backend: EspeakBackend
+
+    def __init__(self, model_path, embeddings_path, tmp_file_path):
+        super(TtsWrapper, self).__init__(model_path, embeddings_path, tmp_file_path)
+        self.model_path = model_path
+
+    def synthesize(self, *args, **kwargs):
+        self.tts_model = self.load_model(self.model_path)
+        filepath = super().synthesize(*args, **kwargs)
+        # force garbage collection
+        del self.tts_model
+        import gc
+        gc.collect()
+        return filepath
+
+    def set_espeak_backend(self):
+        self.espeak_backend = EspeakBackend(
+            Config.language,
+            preserve_punctuation=True,
+            with_stress=True,
+            language_switch="remove-flags",
+        )
+
+
 class TtsAdapter:
     tts: TTS
 
@@ -65,7 +93,7 @@ class TtsAdapter:
             espeak_dll = '/usr/lib/libespeak-ng.so'
         embeddings_path = prefix + 'Custom Application Data Folder/Resources'
 
-        self.tts = TTS(model_path, embeddings_path, Config.output_file_path)
+        self.tts = TtsWrapper(model_path, embeddings_path, Config.output_file_path)
         self.tts.set_espeak_library(espeak_dll)
         self.tts.set_espeak_backend()
 

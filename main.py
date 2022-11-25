@@ -5,6 +5,7 @@ import sys
 import time
 from dataclasses import asdict
 
+import adapter.extractedData
 from flask import Flask, make_response, jsonify, request
 from adapter.gameTtsAdapter import DatabaseAdapter, TtsAdapter, setup_gameTTS
 from core.housekeeper import Housekeeper
@@ -13,6 +14,8 @@ from core.housekeeper import Housekeeper
 async def main():
     logging.basicConfig(level=logging.DEBUG)
     sys.path.append('gametts')
+    import core.config
+    config = core.config.Config
     setup_gameTTS()
     app = Flask("gameTTSServ")
     db = DatabaseAdapter()
@@ -48,11 +51,11 @@ async def main():
     @app.route('/synthesize', methods=['GET', 'POST'])
     async def synthesize():
         params = {
-            'speaker_id': 1,
-            'emotion_id': 5,
-            'style_id': 0,
+            'speaker_id': config.default_speaker_id,
+            'emotion_id': config.default_emotion_id,
+            'style_id': config.default_style_id,
             'text': '',
-            'speech_speed': 1.1
+            'speech_speed': config.speech_speed
         }
         data = request.json if request.method == 'POST' else request.args
         if not isinstance(data, dict):
@@ -63,8 +66,8 @@ async def main():
             if key in data:
                 params[key] = type(params[key])(data[key])
 
-        if len(params['text']) > 1000:
-            return make_response(f'text has a maximum length of 1000', 400)
+        if len(params['text']) > config.max_text_length:
+            return make_response(f'text has a maximum length of ${config.max_text_length}', 400)
         if len(params['text']) == 0:
             return make_response(f'text must not be empty', 400)
         start_time = time.process_time()
