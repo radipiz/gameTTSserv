@@ -3,12 +3,12 @@ import pathlib
 import pydub
 import sys
 import typing
-import uuid
 import zipfile
 from databases import Database
 from .databaseModel import ExtendedSpeaker, Game
 from gametts.GameTTS.gametts import TTS
 from core.config import Config
+import core.util
 
 
 class DatabaseAdapter:
@@ -69,17 +69,24 @@ class TtsAdapter:
         self.tts.set_espeak_library(espeak_dll)
         self.tts.set_espeak_backend()
 
-    async def synthesize(self, text, speaker_id=1, language_id=1, emotion_id=1, style_id=0) -> pathlib.Path:
-        filepath = self.tts.synthesize(text, speaker_id, language_id, emotion_id, style_id, {
+    async def synthesize(self, text, speaker_id=1, emotion_id=1, style_id=0,
+                         speech_speed=Config.speech_speed) -> pathlib.Path:
+        file_name = core.util.generate_filename(speaker_id, emotion_id, style_id, speech_speed, text)
+        cache_path = pathlib.Path(Config.output_file_path, file_name + '.mp3')
+        if cache_path.is_file():
+            return cache_path
+        # speaker_id is only visual
+        # the actual voice is the language_id (third argument)
+        filepath = self.tts.synthesize(text, speaker_id, speaker_id, emotion_id, style_id, {
             'split_sentence': False,
             'sample_size': Config.sample_size,
             'varianz_a': Config.speech_varianceA,
             'varianz_b': Config.speech_varianceB,
-            'speech_speed': Config.speech_speed,
+            'speech_speed': speech_speed,
             'emotion_weight': Config.emotion_weight,
-            'file_name': str(uuid.uuid4())
+            'file_name': file_name
         })
-        return filepath
+        return await self.convert_wav_to_mp3(filepath)
 
     async def convert_wav_to_mp3(self, filepath: pathlib.Path, delete_original=True):
         output_path = pathlib.Path(filepath.parent, filepath.stem + '.mp3')

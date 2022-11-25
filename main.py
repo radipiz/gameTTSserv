@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import asyncio
+import logging
 import sys
 import time
 from dataclasses import asdict
@@ -10,6 +11,7 @@ from core.housekeeper import Housekeeper
 
 
 async def main():
+    logging.basicConfig(level=logging.DEBUG)
     sys.path.append('gametts')
     setup_gameTTS()
     app = Flask("gameTTSServ")
@@ -39,10 +41,10 @@ async def main():
     async def synthesize():
         params = {
             'speaker_id': 1,
-            'language_id': 1,
             'emotion_id': 1,
             'style_id': 1,
-            'text': ''
+            'text': '',
+            'speech_speed': 1.1
         }
         data = request.json if request.method == 'POST' else request.args
         if not isinstance(data, dict):
@@ -58,10 +60,9 @@ async def main():
         if len(params['text']) == 0:
             return make_response(f'text must not be empty', 400)
         start_time = time.process_time()
-        wav_file = await tts.synthesize(**params)
-        mp3_file = await tts.convert_wav_to_mp3(wav_file)
+        mp3_file = await tts.synthesize(**params)
         end_time = time.process_time()
-        print(wav_file)
+        logging.debug(f'Processed %d characters in %s seconds', len(params['text']), end_time - start_time)
         with open(mp3_file, 'rb') as audio:
             response = make_response(audio.read())
 
@@ -77,4 +78,4 @@ async def main():
 
 
 if __name__ == '__main__':
-    asyncio.run(main(), debug=True)
+    asyncio.run(main(), debug=False)
