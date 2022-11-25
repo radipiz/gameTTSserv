@@ -1,10 +1,13 @@
 import os
+import pathlib
+import pydub
 import sys
 import typing
 import zipfile
 from databases import Database
 from .databaseModel import ExtendedSpeaker, Game
 from gametts.GameTTS.gametts import TTS
+from core.config import Config
 
 
 class DatabaseAdapter:
@@ -44,7 +47,7 @@ class DatabaseAdapter:
         return list(map(lambda r: ExtendedSpeaker(**r), result))
 
     async def get_games(self) -> typing.List[Game]:
-        query = 'SELECT `id` game_id, `name` FROM `main`.`Game` ORDER BY `name`'
+        query = 'SELECT `id` game_id, `Name` name FROM `main`.`Game` ORDER BY `Name`'
         result = await self.database.fetch_all(query=query)
         return list(map(lambda r: Game(**r), result))
 
@@ -55,22 +58,32 @@ class TtsAdapter:
     def __init__(self):
         prefix = 'gametts/'
         model_path = prefix + 'Custom Application Data Folder/Resources/TTS'
-        # espeakDLL = 'Custom Application Data Folder/Resources/libespeak-ng.dll'
-        espeakDLL = '/usr/lib/libespeak-ng.so'
+        if os.name == 'nt':
+            espeak_dll = 'Custom Application Data Folder/Resources/libespeak-ng.dll'
+        else:
+            espeak_dll = '/usr/lib/libespeak-ng.so'
         tmp_file_path = '/tmp'
         embeddings_path = prefix + 'Custom Application Data Folder/Resources'
 
         self.tts = TTS(model_path, embeddings_path, tmp_file_path)
-        self.tts.set_espeak_library(espeakDLL)
+        self.tts.set_espeak_library(espeak_dll)
         self.tts.set_espeak_backend()
 
-    async def synthesize(self):
-        print('Starting')
-        filepath = self.tts.synthesize("Test", 1, 1, 2, 1,
-                                       {'split_sentence': True, 'sample_size': 1, 'varianz_a': 1, 'varianz_b': 1,
-                                        'speech_speed': 1, 'emotion_weight': 1})
-        print(filepath)
+    async def synthesize(self, text, speaker_id=1, language_id=1, emotion_id=1, style_id=1) -> pathlib.Path:
+        filepath = self.tts.synthesize(text, speaker_id, language_id, emotion_id, style_id, {
+            'split_sentence': False,
+            'sample_size': 1,
+            'varianz_a': Config.speech_varianceA,
+            'varianz_b': Config.speech_varianceB,
+            'speech_speed': Config.speech_speed,
+            'emotion_weight': Config.emotion_weight
+        })
         return filepath
+
+    async def convert_wav_to_mp3(self, filepath: pathlib.Path):
+        output_path = pathlib.Path(filepath.parent, filepath.stem + '.mp3')
+        pydub.AudioSegment.from_wav(filepath).export(output_path, format='mp3')
+        return output_path
 
 
 def setup_gameTTS():
