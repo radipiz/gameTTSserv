@@ -4,9 +4,9 @@ import sys
 import time
 from dataclasses import asdict
 
-import adapter.patches
 from flask import Flask, make_response, jsonify, request
 from adapter.gameTtsAdapter import DatabaseAdapter, TtsAdapter, setup_gameTTS
+from core.housekeeper import Housekeeper
 
 
 async def main():
@@ -17,6 +17,8 @@ async def main():
     await db.connect()
 
     tts = TtsAdapter()
+    housekeeper = Housekeeper()
+    housekeeper.scan()
 
     @app.route('/get_voices', methods=['GET'])
     async def get_voices():
@@ -42,15 +44,14 @@ async def main():
             'style_id': 1,
             'text': ''
         }
-        data = request.json
+        data = request.json if request.method == 'POST' else request.args
         if not isinstance(data, dict):
-            return make_response('Body must contain json object containing the following keys: ' + ', '.join(params.keys()))
+            return make_response(
+                'Body must contain json object containing the following keys: ' + ', '.join(params.keys()))
 
         for key in params:
             if key in data:
-                if not isinstance(data[key], type(params[key])):
-                    return make_response(f'{key} has must be {type(params[key])}', 400)
-                params[key] = data[key]
+                params[key] = type(params[key])(data[key])
 
         if len(params['text']) > 1000:
             return make_response(f'text has a maximum length of 1000', 400)
