@@ -37,6 +37,14 @@ async def main():
         voices = await db.get_all_characters()
         return jsonify(list(map(lambda v: asdict(v), voices)))
 
+    @app.route('/get_emotes', methods=['GET'])
+    async def get_emotes():
+        return jsonify(adapter.extractedData.EMOTION)
+
+    @app.route('/get_speech_styles', methods=['GET'])
+    async def get_speech_styles():
+        return jsonify(adapter.extractedData.SPEECH_STYLE)
+
     @app.route('/synthesize', methods=['GET', 'POST'])
     async def synthesize():
         params = {
