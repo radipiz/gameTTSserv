@@ -25,6 +25,8 @@ class Config:
     # maximum character count to synthesize
     max_text_length = 1000 if "CONF_MAX_TEXT_LENGTH" not in os.environ else int(os.environ["CONF_MAX_TEXT_LENGTH"])
 
+    server_port = 3000 if "CONF_PORT" not in os.environ else int(os.environ["CONF_PORT"])
+
     # values > 0 enable housekeeper service
     max_stored_files = 500 if "CONF_MAX_FILES" not in os.environ else int(os.environ["CONF_MAX_FILES"])
 
