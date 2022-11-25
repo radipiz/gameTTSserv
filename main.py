@@ -49,8 +49,8 @@ async def main():
     async def synthesize():
         params = {
             'speaker_id': 1,
-            'emotion_id': 1,
-            'style_id': 1,
+            'emotion_id': 5,
+            'style_id': 0,
             'text': '',
             'speech_speed': 1.1
         }
