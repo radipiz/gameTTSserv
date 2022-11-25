@@ -10,6 +10,14 @@ from flask import Flask, make_response, jsonify, request
 from adapter.gameTtsAdapter import DatabaseAdapter, TtsAdapter, setup_gameTTS
 from core.housekeeper import Housekeeper
 
+background_tasks = set()
+
+
+def schedule_housekeeping_task(housekeeper: Housekeeper):
+    task = asyncio.create_task(housekeeper.sweep())
+    background_tasks.add(task)
+    task.add_done_callback(background_tasks.discard)
+
 
 async def main():
     logging.basicConfig(level=logging.DEBUG)
@@ -22,8 +30,11 @@ async def main():
     await db.connect()
 
     tts = TtsAdapter()
+
+    # initialize Housekeeping
     housekeeper = Housekeeper()
     housekeeper.scan()
+    schedule_housekeeping_task(housekeeper)
 
     @app.route('/get_voices', methods=['GET'])
     async def get_voices():
@@ -83,6 +94,7 @@ async def main():
         response.headers['Content-Type'] = 'audio/mp3'
         response.headers['Processing-Time'] = str(end_time - start_time)
 
+        schedule_housekeeping_task(housekeeper)
         return response
 
     app.run(host='0.0.0.0', port=3000, debug=True)

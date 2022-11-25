@@ -1,4 +1,5 @@
 import logging
+import os
 import pathlib
 import typing
 from threading import Lock
@@ -17,15 +18,19 @@ class Housekeeper:
     def add_file(self, path: pathlib.Path) -> None:
         self.tracked_files.append(path)
 
-    def sweep(self, items_to_keep: int = Config.max_stored_files):
+    async def sweep(self, items_to_keep: int = Config.max_stored_files):
         logging.info('Starting cleanup')
+        deleted_files = 0
         self.file_list_lock.acquire()
         if len(self.tracked_files) > items_to_keep:
-            logging.debug('Cleaning %d files', len(self.tracked_files) - items_to_keep)
+            deleted_files = len(self.tracked_files) - items_to_keep
+            logging.debug('Cleaning %d files', deleted_files)
             for _ in range(len(self.tracked_files) - items_to_keep):
                 processed_file = self.tracked_files.pop(0)
-                print('deleting ' + str(processed_file))
+                logging.debug('deleting ' + str(processed_file))
+                os.unlink(processed_file)
         self.file_list_lock.release()
+        logging.info('Cleanup finished. Deleted %d files', deleted_files)
 
     def scan(self):
         logging.debug('Scanning %s for files to housekeep', Config.output_file_path)
