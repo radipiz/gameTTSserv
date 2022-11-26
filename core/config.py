@@ -13,21 +13,19 @@ class Config:
     # use en-us for English
     # see https://github.com/espeak-ng/espeak-ng/blob/master/docs/languages.md for more languages
     # (use values from Identifier column; may sound weird if the speech model doesn't "know" how it should sound)
-    language = 'de' if "CONF_LANGUAGE" not in os.environ else os.environ['CONF_LANGUAGE']
+    language = os.getenv("CONF_LANGUAGE", "de")
 
     # configurable
     # lower values = faster
-    speech_speed = 1.1 if "CONF_SPEECH_SPEED" not in os.environ else float(os.environ["CONF_SPEECH_SPEED"])
-    default_speaker_id = 1 if "CONF_SPEAKER_ID" not in os.environ else int(os.environ["CONF_SPEAKER_ID"])
-    default_emotion_id = 5 if "CONF_EMOTION_ID" not in os.environ else int(os.environ["CONF_EMOTION_ID"])
-    default_style_id = 0 if "CONF_STYLE_ID" not in os.environ else int(os.environ["CONF_STYLE_ID"])
+    speech_speed = float(os.getenv("CONF_SPEECH_SPEED", 1.1))
+    default_speaker_id = int(os.getenv("CONF_SPEAKER_ID", 1))
+    default_emotion_id = int(os.getenv("CONF_EMOTION_ID", 5))
+    default_style_id = int(os.getenv("CONF_STYLE_ID", 0))
 
     # maximum character count to synthesize
-    max_text_length = 1000 if "CONF_MAX_TEXT_LENGTH" not in os.environ else int(os.environ["CONF_MAX_TEXT_LENGTH"])
-
-    server_port = 3000 if "CONF_PORT" not in os.environ else int(os.environ["CONF_PORT"])
+    max_text_length = int(os.getenv("CONF_MAX_TEXT_LENGTH", 1000))
 
     # values > 0 enable housekeeper service
-    max_stored_files = 500 if "CONF_MAX_FILES" not in os.environ else int(os.environ["CONF_MAX_FILES"])
+    max_stored_files = int(os.getenv("CONF_MAX_FILES", 500))
 
     output_file_path = '/tmp'

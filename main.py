@@ -19,7 +19,7 @@ def schedule_housekeeping_task(housekeeper: Housekeeper):
     task.add_done_callback(background_tasks.discard)
 
 
-async def main():
+async def create_app():
     logging.basicConfig(level=logging.DEBUG)
     sys.path.append('gametts')
     import core.config
@@ -97,8 +97,13 @@ async def main():
         schedule_housekeeping_task(housekeeper)
         return response
 
-    app.run(host='0.0.0.0', port=config.server_port)
+    return app
+
+
+def get_app():
+    return asyncio.run(create_app())
 
 
 if __name__ == '__main__':
-    asyncio.run(main(), debug=False)
+    flask = asyncio.run(create_app())
+    flask.run(host='0.0.0.0', port=3000)
