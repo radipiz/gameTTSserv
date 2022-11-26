@@ -11,3 +11,5 @@ flask[async]
 databases[aiosqlite]==0.6.1
 aiosqlite==0.17.0
 sqlalchemy<=1.4.41 # 1.4.42 is not compatible with databases[aiosqlite]==0.6.1
+
+gunicorn==20.1.0
