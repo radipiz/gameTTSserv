@@ -90,7 +90,7 @@ class TtsAdapter:
         if os.name == 'nt':
             espeak_dll = 'Custom Application Data Folder/Resources/libespeak-ng.dll'
         else:
-            espeak_dll = '/usr/lib/libespeak-ng.so'
+            espeak_dll = core.util.locate_espeak()
         embeddings_path = prefix + 'Custom Application Data Folder/Resources'
 
         self.tts = TtsWrapper(model_path, embeddings_path, Config.output_file_path)
