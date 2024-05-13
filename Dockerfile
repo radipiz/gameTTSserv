@@ -7,7 +7,7 @@ ARG UID=1000
 ARG GID=1000
 
 RUN apt update \
-    && apt install --yes libopenblas-base libopenblas-dev ffmpeg espeak-ng g++ \
+    && apt install --yes libopenblas-base libopenblas-dev ffmpeg espeak-ng g++ curl \
     && rm -rf /usr/share/doc /usr/share/man /var/lib/apt/lists/* \
     && apt-get clean \
     && groupadd -g "${GID}" python \
